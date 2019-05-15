@@ -1,8 +1,8 @@
 FILE_LIST = ./.installed_files.txt
 
-.PHONY: pull push clean install uninstall dom
+.PHONY: pull push clean install uninstall
 
-default: | pull clean dom install
+default: | pull clean install
 
 install:
 	@ ./setup.py install --record $(FILE_LIST)
@@ -18,6 +18,3 @@ pull:
 
 push:
 	@ git push
-
-dom:
-	@ pyxbgen -u files/tenant2tenant.xsd -m dom --module-prefix=tenant2tenant
