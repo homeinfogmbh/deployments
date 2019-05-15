@@ -1,4 +1,4 @@
-"""Authenticated and authorized HIS services."""
+"""HIS service to handle system deployments."""
 
 from collections import defaultdict
 from contextlib import suppress
@@ -96,21 +96,21 @@ def add():
     try:
         type_ = Type(request.json['type'])
     except KeyError:
-        raise Error('No type specified.')
+        return ('No type specified.', 400)
     except ValueError:
-        raise Error('Invalid type.')
+        return ('Invalid type.', 400)
 
     try:
         connection = Connection(request.json['connection'])
     except KeyError:
-        raise Error('No connection specified.')
+        return ('No connection specified.', 400)
     except ValueError:
-        raise Error('Invalid connection.')
+        return ('Invalid connection.', 400)
 
     address = request.json.get('address')
 
     if not address:
-        raise Error('No address specified.')
+        return ('No address specified.', 400)
 
     address = _get_address(address)
     address.save()
