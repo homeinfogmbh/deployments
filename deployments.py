@@ -5,8 +5,8 @@ from contextlib import suppress
 
 from flask import request
 
-from his import ACCOUNT, CUSTOMER, authenticated, authorized, root, Application
-from mdb import Address, Customer
+from his import CUSTOMER, authenticated, authorized, root, Application
+from mdb import Address
 from terminallib import Connection, Deployment, Type
 from timelib import strpdatetime
 from wsgilib import Error, JSON
@@ -69,26 +69,6 @@ def _get_deployment(ident):
         raise Error('No such deployment.', status=404)
 
 
-def _get_customer_id():
-    """Returns the set customer."""
-
-    if ACCOUNT.root:
-        customer = request.json.get('customer')
-
-        if customer:
-            try:
-                customer, *superfluous = Customer.find(customer)
-            except ValueError:
-                raise Error('No such customer.', status=404)
-
-            if superfluous:
-                raise Error('Ambiguous customer.')
-
-            return customer.id
-
-    return CUSTOMER.id
-
-
 @authenticated
 @authorized('deployments')
 def list_():
@@ -112,8 +92,6 @@ def all_():
 @authorized('deployments')
 def add():
     """Adds a deployment."""
-
-    customer_id = _get_customer_id()
 
     try:
         type_ = Type(request.json['type'])
@@ -149,7 +127,7 @@ def add():
     annotation = request.json.get('annotation')
     testing = request.json.get('testing')
     deployment = Deployment(
-        customer=customer_id, type=type_, connection=connection,
+        customer=CUSTOMER.id, type=type_, connection=connection,
         address=address, lpt_address=lpt_address, weather=weather,
         scheduled=scheduled, annotation=annotation, testing=testing)
     deployment.save()
@@ -163,9 +141,6 @@ def patch(ident):
     """Modifies the respective deployment."""
 
     deployment = _get_deployment(ident)
-
-    if request.json.get('customer'):
-        deployment.customer = _get_customer_id()
 
     try:
         with suppress(KeyError):
