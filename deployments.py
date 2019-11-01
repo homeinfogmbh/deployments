@@ -143,18 +143,16 @@ def patch(ident):
     deployment = _get_deployment(ident)
 
     try:
-        deployment.type = Type(request.json['type'])
-    except KeyError:
-        pass
+        with suppress(KeyError):
+            deployment.type = Type(request.json['type'])
     except ValueError:
-        raise Error('Invalid type.')
+        return Error('Invalid type.')
 
     try:
-        deployment.connection = Connection(request.json['connection'])
-    except KeyError:
-        pass
+        with suppress(KeyError):
+            deployment.connection = Connection(request.json['connection'])
     except ValueError:
-        raise Error('Invalid connection.')
+        return Error('Invalid connection.')
 
     address = request.json.get('address')
 
@@ -174,11 +172,10 @@ def patch(ident):
         deployment.weather = request.json['weather']
 
     try:
-        scheduled = request.json['scheduled']
-    except KeyError:
-        pass
-    else:
-        deployment.scheduled = strpdatetime(scheduled)
+        with suppress(KeyError):
+            deployment.scheduled = strpdatetime(request.json['scheduled'])
+    except ValueError:
+        return Error('Invalid connection.')
 
     with suppress(KeyError):
         deployment.annotation = request.json['annotation']
@@ -208,11 +205,10 @@ def delete(ident):
     return JSON({'message': 'Deployment deleted.'})
 
 
-ROUTES = (
+APPLICATION.add_routes((
     ('GET', '/', list_),
     ('GET', '/all', all_),
     ('POST', '/', add),
     ('PATCH', '/<int:ident>', patch),
     ('DELETE', '/<int:ident>', delete),
-)
-APPLICATION.add_routes(ROUTES)
+))
