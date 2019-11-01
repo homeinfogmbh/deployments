@@ -187,7 +187,7 @@ def patch(ident):
         deployment.testing = request.json['testing']
 
     deployment.save()
-    return 'Deployment patched.'
+    return JSON({'message': 'Deployment patched.'})
 
 
 @authenticated
@@ -205,7 +205,7 @@ def delete(ident):
         return JSON(json, status=403)
 
     deployment.delete_instance()
-    return 'Deployment deleted.'
+    return JSON({'message': 'Deployment deleted.'})
 
 
 ROUTES = (
