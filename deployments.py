@@ -135,6 +135,8 @@ def add():
     return JSON(json, status=201)
 
 
+@authenticated
+@authorized('deployments')
 def patch(ident):
     """Modifies the respective deployment."""
 
@@ -188,6 +190,8 @@ def patch(ident):
     return 'Deployment patched.'
 
 
+@authenticated
+@authorized('deployments')
 def delete(ident):
     """Deletes the respective deployment."""
 
@@ -209,5 +213,6 @@ ROUTES = (
     ('GET', '/all', all_),
     ('POST', '/', add),
     ('PATCH', '/<int:ident>', patch),
+    ('DELETE', '/<int:ident>', delete),
 )
 APPLICATION.add_routes(ROUTES)
