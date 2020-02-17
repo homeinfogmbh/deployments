@@ -35,7 +35,7 @@ def all_deployments():
     deployments = defaultdict(list)
 
     for deployment in Deployment:
-        json = deployment.to_json(systems=True, skip='customer', cascade=2)
+        json = deployment.to_json(systems=True, skip=['customer'], cascade=2)
         deployments[deployment.customer.id].append(json)
 
     return deployments
@@ -99,7 +99,7 @@ def list_():
     """Lists the customer's deployments."""
 
     return JSON([
-        deployment.to_json(systems=True, skip='customer', cascade=2)
+        deployment.to_json(systems=True, skip=['customer'], cascade=2)
         for deployment in Deployment.select().where(
             Deployment.customer == CUSTOMER.id)])
 
