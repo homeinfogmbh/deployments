@@ -216,5 +216,5 @@ APPLICATION.add_routes((
     ('GET', '/all', all_),
     ('POST', '/', add),
     ('PATCH', '/<int:ident>', patch),
-    ('DELETE', '/<int:ident>', delete),
+    ('DELETE', '/<int:ident>', delete)
 ))
