@@ -5,7 +5,12 @@ from contextlib import suppress
 
 from flask import request
 
-from his import CUSTOMER, authenticated, authorized, root, Application
+from his import ACCOUNT
+from his import CUSTOMER
+from his import authenticated
+from his import authorized
+from his import root
+from his import Application
 from mdb import Address
 from terminallib import Connection, Deployment, Type
 from timelib import strpdatetime
@@ -24,7 +29,7 @@ MSG_DEPLOYMENT_PATCHED = JSONMessage('Deployment patched.', status=200)
 MSG_DEPLOYMENT_DELETED = JSONMessage('Deployment deleted.', status=200)
 
 
-def _all_deployments():
+def all_deployments():
     """Yields a JSON-ish dict of all deployments."""
 
     deployments = defaultdict(list)
@@ -36,7 +41,7 @@ def _all_deployments():
     return deployments
 
 
-def _get_address(address):
+def get_address(address):
     """Returns the respective address."""
 
     try:
@@ -64,7 +69,7 @@ def _get_address(address):
     return Address.add_by_address(address, state=state)
 
 
-def _get_deployment(ident):
+def get_deployment(ident):
     """Returns the respective deployment."""
 
     try:
@@ -73,6 +78,18 @@ def _get_deployment(ident):
             & (Deployment.id == ident))
     except Deployment.DoesNotExist:
         raise MSG_NO_SUCH_DEPLOYMENT
+
+
+def check_modifyable(deployment):
+    """Checks whether the deployment may be modified."""
+
+    if ACCOUNT.root:
+        return
+
+    systems = [system.id for system in deployment.systems]
+
+    if systems:
+        raise MSG_SYSTEMS_DEPLOYED.update(systems=systems)
 
 
 @authenticated
@@ -91,7 +108,7 @@ def list_():
 def all_():
     """Lists all customers' deployments."""
 
-    return JSON(_all_deployments())
+    return JSON(all_deployments())
 
 
 @authenticated
@@ -118,12 +135,12 @@ def add():
     if not address:
         return ('No address specified.', 400)
 
-    address = _get_address(address)
+    address = get_address(address)
     address.save()
     lpt_address = request.json.get('lptAddress')
 
     if lpt_address:
-        lpt_address = _get_address(lpt_address)
+        lpt_address = get_address(lpt_address)
         lpt_address.save()
     else:
         lpt_address = None
@@ -145,11 +162,8 @@ def add():
 def patch(ident):
     """Modifies the respective deployment."""
 
-    deployment = _get_deployment(ident)
-    systems = [system.id for system in deployment.systems]
-
-    if systems:
-        return MSG_SYSTEMS_DEPLOYED.update(systems=systems)
+    deployment = get_deployment(ident)
+    check_modifyable(deployment)
 
     try:
         with suppress(KeyError):
@@ -166,14 +180,14 @@ def patch(ident):
     address = request.json.get('address')
 
     if address:
-        address = _get_address(address)
+        address = get_address(address)
         address.save()
         deployment.address = address
 
     lpt_address = request.json.get('lptAddress')
 
     if lpt_address:
-        lpt_address = _get_address(lpt_address)
+        lpt_address = get_address(lpt_address)
         lpt_address.save()
         deployment.lpt_address = lpt_address
 
@@ -201,12 +215,8 @@ def patch(ident):
 def delete(ident):
     """Deletes the respective deployment."""
 
-    deployment = _get_deployment(ident)
-    systems = [system.id for system in deployment.systems]
-
-    if systems:
-        return MSG_SYSTEMS_DEPLOYED.update(systems=systems)
-
+    deployment = get_deployment(ident)
+    check_modifyable(deployment)
     deployment.delete_instance()
     return MSG_DEPLOYMENT_DELETED
 
