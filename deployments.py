@@ -9,13 +9,15 @@ from his import CUSTOMER, authenticated, authorized, root, Application
 from mdb import Address
 from terminallib import Connection, Deployment, Type
 from timelib import strpdatetime
-from wsgilib import Error, JSON
+from wsgilib import Error, JSON, JSONMessage
 
 
 __all__ = ['APPLICATION']
 
 
 APPLICATION = Application('Deployments', debug=True)
+MSG_SYSTEMS_DEPLOYED = JSONMessage(
+    'Systems have already been deployed here.', status=403)
 
 
 def _all_deployments():
@@ -141,6 +143,10 @@ def patch(ident):
     """Modifies the respective deployment."""
 
     deployment = _get_deployment(ident)
+    systems = [system.id for system in deployment.systems]
+
+    if systems:
+        return MSG_SYSTEMS_DEPLOYED.update(systems=systems)
 
     try:
         with suppress(KeyError):
@@ -196,10 +202,7 @@ def delete(ident):
     systems = [system.id for system in deployment.systems]
 
     if systems:
-        json = {
-            'message': 'Systems have already been deployed here.',
-            'systems': systems}
-        return JSON(json, status=403)
+        return MSG_SYSTEMS_DEPLOYED.update(systems=systems)
 
     deployment.delete_instance()
     return JSON({'message': 'Deployment deleted.'})
