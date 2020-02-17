@@ -92,6 +92,7 @@ def check_modifyable(deployment):
         raise MSG_SYSTEMS_DEPLOYED.update(systems=systems)
 
 
+@APPLICATION.route('/', methods=['GET'])
 @authenticated
 @authorized('deployments')
 def list_():
@@ -103,6 +104,7 @@ def list_():
             Deployment.customer == CUSTOMER.id)])
 
 
+@APPLICATION.route('/all', methods=['GET'])
 @authenticated
 @root
 def all_():
@@ -111,6 +113,7 @@ def all_():
     return JSON(all_deployments())
 
 
+@APPLICATION.route('/', methods=['POST'])
 @authenticated
 @authorized('deployments')
 def add():
@@ -157,6 +160,7 @@ def add():
     return MSG_DEPLOYMENT_ADDED.update(id=deployment.id)
 
 
+@APPLICATION.route('/<int:ident>', methods=['PATCH'])
 @authenticated
 @authorized('deployments')
 def patch(ident):
@@ -210,6 +214,7 @@ def patch(ident):
     return MSG_DEPLOYMENT_PATCHED
 
 
+@APPLICATION.route('/<int:ident>', methods=['PATCH'])
 @authenticated
 @authorized('deployments')
 def delete(ident):
@@ -219,12 +224,3 @@ def delete(ident):
     check_modifyable(deployment)
     deployment.delete_instance()
     return MSG_DEPLOYMENT_DELETED
-
-
-APPLICATION.add_routes((
-    ('GET', '/', list_),
-    ('GET', '/all', all_),
-    ('POST', '/', add),
-    ('PATCH', '/<int:ident>', patch),
-    ('DELETE', '/<int:ident>', delete)
-))
