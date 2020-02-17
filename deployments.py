@@ -16,8 +16,12 @@ __all__ = ['APPLICATION']
 
 
 APPLICATION = Application('Deployments', debug=True)
+MSG_NO_SUCH_DEPLOYMENT = JSONMessage('No such deployment.', status=404)
+MSG_DEPLOYMENT_ADDED = JSONMessage('Deployment added.', status=201)
 MSG_SYSTEMS_DEPLOYED = JSONMessage(
     'Systems have already been deployed here.', status=403)
+MSG_DEPLOYMENT_PATCHED = JSONMessage('Deployment patched.', status=200)
+MSG_DEPLOYMENT_DELETED = JSONMessage('Deployment deleted.', status=200)
 
 
 def _all_deployments():
@@ -68,7 +72,7 @@ def _get_deployment(ident):
             (Deployment.customer == CUSTOMER.id)
             & (Deployment.id == ident))
     except Deployment.DoesNotExist:
-        raise Error('No such deployment.', status=404)
+        raise MSG_NO_SUCH_DEPLOYMENT
 
 
 @authenticated
@@ -133,8 +137,7 @@ def add():
         address=address, lpt_address=lpt_address, weather=weather,
         scheduled=scheduled, annotation=annotation, testing=testing)
     deployment.save()
-    json = {'message': 'Deployment added.', 'id': deployment.id}
-    return JSON(json, status=201)
+    return MSG_DEPLOYMENT_ADDED.update(id=deployment.id)
 
 
 @authenticated
@@ -190,7 +193,7 @@ def patch(ident):
         deployment.testing = request.json['testing']
 
     deployment.save()
-    return JSON({'message': 'Deployment patched.'})
+    return MSG_DEPLOYMENT_PATCHED
 
 
 @authenticated
@@ -205,7 +208,7 @@ def delete(ident):
         return MSG_SYSTEMS_DEPLOYED.update(systems=systems)
 
     deployment.delete_instance()
-    return JSON({'message': 'Deployment deleted.'})
+    return MSG_DEPLOYMENT_DELETED
 
 
 APPLICATION.add_routes((
