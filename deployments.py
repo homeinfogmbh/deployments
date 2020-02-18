@@ -92,7 +92,7 @@ def check_modifyable(deployment):
         raise MSG_SYSTEMS_DEPLOYED.update(systems=systems)
 
 
-@APPLICATION.route('/', methods=['GET'])
+@APPLICATION.route('/', methods=['GET'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
 def list_():
@@ -104,7 +104,7 @@ def list_():
             Deployment.customer == CUSTOMER.id)])
 
 
-@APPLICATION.route('/all', methods=['GET'])
+@APPLICATION.route('/all', methods=['GET'], strict_slashes=False)
 @authenticated
 @root
 def all_():
@@ -113,7 +113,7 @@ def all_():
     return JSON(all_deployments())
 
 
-@APPLICATION.route('/', methods=['POST'])
+@APPLICATION.route('/', methods=['POST'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
 def add():
@@ -160,7 +160,7 @@ def add():
     return MSG_DEPLOYMENT_ADDED.update(id=deployment.id)
 
 
-@APPLICATION.route('/<int:ident>', methods=['PATCH'])
+@APPLICATION.route('/<int:ident>', methods=['PATCH'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
 def patch(ident):
@@ -214,7 +214,7 @@ def patch(ident):
     return MSG_DEPLOYMENT_PATCHED
 
 
-@APPLICATION.route('/<int:ident>', methods=['PATCH'])
+@APPLICATION.route('/<int:ident>', methods=['PATCH'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
 def delete(ident):
