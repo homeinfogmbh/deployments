@@ -11,8 +11,8 @@ from his import authenticated
 from his import authorized
 from his import root
 from his import Application
+from hwdb import Connection, Deployment, Type
 from mdb import Address
-from terminallib import Connection, Deployment, Type
 from timelib import strpdatetime
 from wsgilib import Error, JSON, JSONMessage
 
