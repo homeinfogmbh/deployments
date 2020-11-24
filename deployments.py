@@ -2,8 +2,9 @@
 
 from collections import defaultdict
 from contextlib import suppress
+from typing import Dict, List
 
-from flask import request
+from flask import Response, request
 
 from his import ACCOUNT
 from his import CUSTOMER
@@ -11,7 +12,7 @@ from his import authenticated
 from his import authorized
 from his import root
 from his import Application
-from hwdb import Connection, Deployment, Type
+from hwdb import Connection, Deployment, DeploymentType
 from mdb import Address
 from timelib import strpdatetime
 from wsgilib import Error, JSON, JSONMessage
@@ -29,7 +30,7 @@ MSG_DEPLOYMENT_PATCHED = JSONMessage('Deployment patched.', status=200)
 MSG_DEPLOYMENT_DELETED = JSONMessage('Deployment deleted.', status=200)
 
 
-def all_deployments():
+def all_deployments() -> Dict[int, List[dict]]:
     """Yields a JSON-ish dict of all deployments."""
 
     deployments = defaultdict(list)
@@ -41,35 +42,35 @@ def all_deployments():
     return deployments
 
 
-def get_address(address):
+def get_address(address: dict) -> Address:
     """Returns the respective address."""
 
     try:
         street = address['street']
     except KeyError:
-        raise Error('No street specified.')
+        raise Error('No street specified.') from None
 
     try:
         house_number = address['houseNumber']
     except KeyError:
-        raise Error('No house number specified.')
+        raise Error('No house number specified.') from None
 
     try:
         zip_code = address['zipCode']
     except KeyError:
-        raise Error('No ZIP code specified.')
+        raise Error('No ZIP code specified.') from None
 
     try:
         city = address['city']
     except KeyError:
-        raise Error('No city specified.')
+        raise Error('No city specified.') from None
 
     state = address.get('state')
     address = (street, house_number, zip_code, city)
     return Address.add_by_address(address, state=state)
 
 
-def get_deployment(ident):
+def get_deployment(ident: int) -> Deployment:
     """Returns the respective deployment."""
 
     try:
@@ -77,10 +78,10 @@ def get_deployment(ident):
             (Deployment.customer == CUSTOMER.id)
             & (Deployment.id == ident))
     except Deployment.DoesNotExist:
-        raise MSG_NO_SUCH_DEPLOYMENT
+        raise MSG_NO_SUCH_DEPLOYMENT from None
 
 
-def check_modifyable(deployment):
+def check_modifyable(deployment: Deployment):
     """Checks whether the deployment may be modified."""
 
     if ACCOUNT.root:
@@ -95,7 +96,7 @@ def check_modifyable(deployment):
 @APPLICATION.route('/', methods=['GET'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
-def list_():
+def list_() -> Response:
     """Lists the customer's deployments."""
 
     return JSON([
@@ -107,7 +108,7 @@ def list_():
 @APPLICATION.route('/all', methods=['GET'], strict_slashes=False)
 @authenticated
 @root
-def all_():
+def all_() -> Response:
     """Lists all customers' deployments."""
 
     return JSON(all_deployments())
@@ -116,11 +117,11 @@ def all_():
 @APPLICATION.route('/', methods=['POST'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
-def add():
+def add() -> Response:
     """Adds a deployment."""
 
     try:
-        type_ = Type(request.json['type'])
+        deployment_type = DeploymentType(request.json['type'])
     except KeyError:
         return ('No type specified.', 400)
     except ValueError:
@@ -153,7 +154,7 @@ def add():
     annotation = request.json.get('annotation')
     testing = request.json.get('testing')
     deployment = Deployment(
-        customer=CUSTOMER.id, type=type_, connection=connection,
+        customer=CUSTOMER.id, type=deployment_type, connection=connection,
         address=address, lpt_address=lpt_address, weather=weather,
         scheduled=scheduled, annotation=annotation, testing=testing)
     deployment.save()
@@ -163,7 +164,7 @@ def add():
 @APPLICATION.route('/<int:ident>', methods=['PATCH'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
-def patch(ident):
+def patch(ident: int) -> Response:
     """Modifies the respective deployment."""
 
     deployment = get_deployment(ident)
@@ -171,7 +172,7 @@ def patch(ident):
 
     try:
         with suppress(KeyError):
-            deployment.type = Type(request.json['type'])
+            deployment.type = DeploymentType(request.json['type'])
     except ValueError:
         return Error('Invalid type.')
 
@@ -217,7 +218,7 @@ def patch(ident):
 @APPLICATION.route('/<int:ident>', methods=['PATCH'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
-def delete(ident):
+def delete(ident: int) -> Response:
     """Deletes the respective deployment."""
 
     deployment = get_deployment(ident)
