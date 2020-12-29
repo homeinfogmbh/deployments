@@ -215,7 +215,7 @@ def patch(ident: int) -> Response:
     return MSG_DEPLOYMENT_PATCHED
 
 
-@APPLICATION.route('/<int:ident>', methods=['PATCH'], strict_slashes=False)
+@APPLICATION.route('/<int:ident>', methods=['DELETE'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
 def delete(ident: int) -> Response:
