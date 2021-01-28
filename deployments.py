@@ -2,8 +2,9 @@
 
 from collections import defaultdict
 from contextlib import suppress
+from typing import Dict, List
 
-from flask import request
+from flask import Response, request
 
 from his import ACCOUNT
 from his import CUSTOMER
@@ -11,7 +12,7 @@ from his import authenticated
 from his import authorized
 from his import root
 from his import Application
-from hwdb import Connection, Deployment, Type
+from hwdb import Connection, Deployment, DeploymentType
 from mdb import Address
 from timelib import strpdatetime
 from wsgilib import Error, JSON, JSONMessage
@@ -23,7 +24,7 @@ __all__ = ['APPLICATION']
 APPLICATION = Application('Deployments', debug=True)
 
 
-def all_deployments() -> dict[int, dict]:
+def all_deployments() -> Dict[int, List[dict]]:
     """Yields a JSON-ish dict of all deployments."""
 
     deployments = defaultdict(list)
@@ -55,7 +56,7 @@ def get_deployment(ident: int) -> Deployment:
     return Deployment.select(cascade=True).where(condition).get()
 
 
-def check_modifyable(deployment: Deployment) -> bool:
+def check_modifyable(deployment: Deployment):
     """Checks whether the deployment may be modified."""
 
     if ACCOUNT.root:
@@ -73,7 +74,7 @@ def check_modifyable(deployment: Deployment) -> bool:
 @APPLICATION.route('/', methods=['GET'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
-def list_():
+def list_() -> Response:
     """Lists the customer's deployments."""
 
     return JSON([
@@ -85,7 +86,7 @@ def list_():
 @APPLICATION.route('/all', methods=['GET'], strict_slashes=False)
 @authenticated
 @root
-def all_():
+def all_() -> Response:
     """Lists all customers' deployments."""
 
     return JSON(all_deployments())
@@ -94,10 +95,10 @@ def all_():
 @APPLICATION.route('/', methods=['POST'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
-def add():
+def add() -> Response:
     """Adds a deployment."""
 
-    type_ = Type(request.json['type'])
+    type_ = DeploymentType(request.json['type'])
     connection = Connection(request.json['connection'])
     address = request.json.get('address')
 
@@ -129,7 +130,7 @@ def add():
 @APPLICATION.route('/<int:ident>', methods=['PATCH'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
-def patch(ident):
+def patch(ident: int) -> Response:
     """Modifies the respective deployment."""
 
     deployment = get_deployment(ident)
@@ -137,7 +138,7 @@ def patch(ident):
 
     try:
         with suppress(KeyError):
-            deployment.type = Type(request.json['type'])
+            deployment.type = DeploymentType(request.json['type'])
     except ValueError:
         return Error('Invalid type.')
 
@@ -180,10 +181,10 @@ def patch(ident):
     return JSONMessage('Deployment patched.', status=200)
 
 
-@APPLICATION.route('/<int:ident>', methods=['PATCH'], strict_slashes=False)
+@APPLICATION.route('/<int:ident>', methods=['DELETE'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
-def delete(ident):
+def delete(ident: int) -> Response:
     """Deletes the respective deployment."""
 
     deployment = get_deployment(ident)
