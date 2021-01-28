@@ -21,75 +21,53 @@ __all__ = ['APPLICATION']
 
 
 APPLICATION = Application('Deployments', debug=True)
-MSG_NO_SUCH_DEPLOYMENT = JSONMessage('No such deployment.', status=404)
-MSG_DEPLOYMENT_ADDED = JSONMessage('Deployment added.', status=201)
-MSG_SYSTEMS_DEPLOYED = JSONMessage(
-    'Systems have already been deployed here.', status=403)
-MSG_DEPLOYMENT_PATCHED = JSONMessage('Deployment patched.', status=200)
-MSG_DEPLOYMENT_DELETED = JSONMessage('Deployment deleted.', status=200)
 
 
-def all_deployments():
+def all_deployments() -> dict[int, dict]:
     """Yields a JSON-ish dict of all deployments."""
 
     deployments = defaultdict(list)
 
-    for deployment in Deployment:
+    for deployment in Deployment.select(cascade=True).where(True):
         json = deployment.to_json(systems=True, skip=['customer'], cascade=2)
         deployments[deployment.customer.id].append(json)
 
     return deployments
 
 
-def get_address(address):
+def get_address(address: dict) -> Address:
     """Returns the respective address."""
 
-    try:
-        street = address['street']
-    except KeyError:
-        raise Error('No street specified.')
-
-    try:
-        house_number = address['houseNumber']
-    except KeyError:
-        raise Error('No house number specified.')
-
-    try:
-        zip_code = address['zipCode']
-    except KeyError:
-        raise Error('No ZIP code specified.')
-
-    try:
-        city = address['city']
-    except KeyError:
-        raise Error('No city specified.')
-
+    street = address['street']
+    house_number = address['houseNumber']
+    zip_code = address['zipCode']
+    city = address['city']
     state = address.get('state')
     address = (street, house_number, zip_code, city)
     return Address.add_by_address(address, state=state)
 
 
-def get_deployment(ident):
+def get_deployment(ident: int) -> Deployment:
     """Returns the respective deployment."""
 
-    try:
-        return Deployment.get(
-            (Deployment.customer == CUSTOMER.id)
-            & (Deployment.id == ident))
-    except Deployment.DoesNotExist:
-        raise MSG_NO_SUCH_DEPLOYMENT
+    condition = Deployment.customer == CUSTOMER.id
+    condition &= Deployment.id == ident
+    return Deployment.select(cascade=True).where(condition).get()
 
 
-def check_modifyable(deployment):
+def check_modifyable(deployment: Deployment) -> bool:
     """Checks whether the deployment may be modified."""
 
     if ACCOUNT.root:
-        return
+        return True
 
     systems = [system.id for system in deployment.systems]
 
     if systems:
-        raise MSG_SYSTEMS_DEPLOYED.update(systems=systems)
+        raise JSONMessage('Systems have already been deployed here.',
+                          systems=systems, status=403)
+
+    return True
 
 
 @APPLICATION.route('/', methods=['GET'], strict_slashes=False)
@@ -119,20 +97,8 @@ def all_():
 def add():
     """Adds a deployment."""
 
-    try:
-        type_ = Type(request.json['type'])
-    except KeyError:
-        return ('No type specified.', 400)
-    except ValueError:
-        return ('Invalid type.', 400)
-
-    try:
-        connection = Connection(request.json['connection'])
-    except KeyError:
-        return ('No connection specified.', 400)
-    except ValueError:
-        return ('Invalid connection.', 400)
-
+    type_ = Type(request.json['type'])
+    connection = Connection(request.json['connection'])
     address = request.json.get('address')
 
     if not address:
@@ -157,7 +123,7 @@ def add():
         address=address, lpt_address=lpt_address, weather=weather,
         scheduled=scheduled, annotation=annotation, testing=testing)
     deployment.save()
-    return MSG_DEPLOYMENT_ADDED.update(id=deployment.id)
+    return JSONMessage('Deployment added.', id=deployment.id, status=201)
 
 
 @APPLICATION.route('/<int:ident>', methods=['PATCH'], strict_slashes=False)
@@ -211,7 +177,7 @@ def patch(ident):
         deployment.testing = request.json['testing']
 
     deployment.save()
-    return MSG_DEPLOYMENT_PATCHED
+    return JSONMessage('Deployment patched.', status=200)
 
 
 @APPLICATION.route('/<int:ident>', methods=['PATCH'], strict_slashes=False)
@@ -221,6 +187,29 @@ def delete(ident):
     """Deletes the respective deployment."""
 
     deployment = get_deployment(ident)
-    check_modifyable(deployment)
-    deployment.delete_instance()
-    return MSG_DEPLOYMENT_DELETED
+
+    if check_modifyable(deployment):
+        deployment.delete_instance()
+
+    return JSONMessage('Deployment deleted.', status=200)
+
+
+@APPLICATION.errorhandler(KeyError)
+def handle_key_error(error: KeyError) -> JSONMessage:
+    """Handles key errors."""
+
+    return JSONMessage('Missing JSON key.', key=str(error))
+
+
+@APPLICATION.errorhandler(ValueError)
+def handle_value_error(error: ValueError) -> JSONMessage:
+    """Handles value errors."""
+
+    return JSONMessage('Invalid value.', value=str(error))
+
+
+@APPLICATION.errorhandler(Deployment.DoesNotExist)
+def handle_no_such_deployment(_: Deployment.DoesNotExist) -> JSONMessage:
+    """Handles non-existant deployments."""
+
+    return JSONMessage('No such deployment.', status=404)
