@@ -44,8 +44,7 @@ def get_address(address: dict) -> Address:
     zip_code = address['zipCode']
     city = address['city']
     state = address.get('state')
-    address = (street, house_number, zip_code, city)
-    return Address.add_by_address(address, state=state)
+    return Address.add(street, house_number, zip_code, city, state=state)
 
 
 def get_deployment(ident: int) -> Deployment:
