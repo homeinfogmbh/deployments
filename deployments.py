@@ -2,9 +2,9 @@
 
 from collections import defaultdict
 from contextlib import suppress
-from typing import Dict, List
+from datetime import datetime
 
-from flask import Response, request
+from flask import request
 
 from his import ACCOUNT
 from his import CUSTOMER
@@ -14,8 +14,7 @@ from his import root
 from his import Application
 from hwdb import Connection, Deployment, DeploymentType
 from mdb import Address
-from timelib import strpdatetime
-from wsgilib import Error, JSON, JSONMessage
+from wsgilib import JSON, JSONMessage
 
 
 __all__ = ['APPLICATION']
@@ -24,7 +23,7 @@ __all__ = ['APPLICATION']
 APPLICATION = Application('Deployments', debug=True)
 
 
-def all_deployments() -> Dict[int, List[dict]]:
+def all_deployments() -> dict[int, list[dict]]:
     """Yields a JSON-ish dict of all deployments."""
 
     deployments = defaultdict(list)
@@ -43,8 +42,7 @@ def get_address(address: dict) -> Address:
     house_number = address['houseNumber']
     zip_code = address['zipCode']
     city = address['city']
-    state = address.get('state')
-    return Address.add(street, house_number, zip_code, city, state=state)
+    return Address.add(street, house_number, zip_code, city)
 
 
 def get_deployment(ident: int) -> Deployment:
@@ -55,7 +53,7 @@ def get_deployment(ident: int) -> Deployment:
     return Deployment.select(cascade=True).where(condition).get()
 
 
-def check_modifyable(deployment: Deployment):
+def can_be_modified(deployment: Deployment):
     """Checks whether the deployment may be modified."""
 
     if ACCOUNT.root:
@@ -64,8 +62,10 @@ def check_modifyable(deployment: Deployment):
     systems = [system.id for system in deployment.systems]
 
     if systems:
-        raise JSONMessage('Systems have already been deployed here.',
-                          systems=systems, status=403)
+        raise JSONMessage(
+            'Systems have already been deployed here.', systems=systems,
+            status=403
+        )
 
     return True
 
@@ -73,19 +73,20 @@ def check_modifyable(deployment: Deployment):
 @APPLICATION.route('/', methods=['GET'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
-def list_() -> Response:
+def list_() -> JSON:
     """Lists the customer's deployments."""
 
     return JSON([
         deployment.to_json(systems=True, skip=['customer'], cascade=2)
         for deployment in Deployment.select().where(
-            Deployment.customer == CUSTOMER.id)])
+            Deployment.customer == CUSTOMER.id)
+    ])
 
 
 @APPLICATION.route('/all', methods=['GET'], strict_slashes=False)
 @authenticated
 @root
-def all_() -> Response:
+def all_() -> JSON:
     """Lists all customers' deployments."""
 
     return JSON(all_deployments())
@@ -94,7 +95,7 @@ def all_() -> Response:
 @APPLICATION.route('/', methods=['POST'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
-def add() -> Response:
+def add() -> JSONMessage:
     """Adds a deployment."""
 
     type_ = DeploymentType(request.json['type'])
@@ -102,7 +103,7 @@ def add() -> Response:
     address = request.json.get('address')
 
     if not address:
-        return ('No address specified.', 400)
+        return JSONMessage('No address specified.', status=400)
 
     address = get_address(address)
     address.save()
@@ -115,7 +116,10 @@ def add() -> Response:
         lpt_address = None
 
     weather = request.json.get('weather')
-    scheduled = strpdatetime(request.json.get('scheduled'))
+
+    if (scheduled := request.json.get('scheduled')) is not None:
+        scheduled = datetime.fromisoformat(scheduled)
+
     annotation = request.json.get('annotation')
     testing = request.json.get('testing')
     deployment = Deployment(
@@ -129,23 +133,23 @@ def add() -> Response:
 @APPLICATION.route('/<int:ident>', methods=['PATCH'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
-def patch(ident: int) -> Response:
+def patch(ident: int) -> JSONMessage:
     """Modifies the respective deployment."""
 
     deployment = get_deployment(ident)
-    check_modifyable(deployment)
+    can_be_modified(deployment)
 
     try:
         with suppress(KeyError):
             deployment.type = DeploymentType(request.json['type'])
     except ValueError:
-        return Error('Invalid type.')
+        return JSONMessage('Invalid type.', status=400)
 
     try:
         with suppress(KeyError):
             deployment.connection = Connection(request.json['connection'])
     except ValueError:
-        return Error('Invalid connection.')
+        return JSONMessage('Invalid connection.', status=400)
 
     address = request.json.get('address')
 
@@ -164,11 +168,10 @@ def patch(ident: int) -> Response:
     with suppress(KeyError):
         deployment.weather = request.json['weather']
 
-    try:
-        with suppress(KeyError):
-            deployment.scheduled = strpdatetime(request.json['scheduled'])
-    except ValueError:
-        return Error('Invalid connection.')
+    if (scheduled := request.json.get('scheduled')) is None:
+        return JSONMessage('Invalid connection.', status=400)
+
+    deployment.scheduled = datetime.fromisoformat(scheduled)
 
     with suppress(KeyError):
         deployment.annotation = request.json['annotation']
@@ -183,12 +186,12 @@ def patch(ident: int) -> Response:
 @APPLICATION.route('/<int:ident>', methods=['DELETE'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
-def delete(ident: int) -> Response:
+def delete(ident: int) -> JSONMessage:
     """Deletes the respective deployment."""
 
     deployment = get_deployment(ident)
 
-    if check_modifyable(deployment):
+    if can_be_modified(deployment):
         deployment.delete_instance()
 
     return JSONMessage('Deployment deleted.', status=200)
@@ -210,6 +213,6 @@ def handle_value_error(error: ValueError) -> JSONMessage:
 
 @APPLICATION.errorhandler(Deployment.DoesNotExist)
 def handle_no_such_deployment(_: Deployment.DoesNotExist) -> JSONMessage:
-    """Handles non-existant deployments."""
+    """Handles non-existent deployments."""
 
     return JSONMessage('No such deployment.', status=404)
