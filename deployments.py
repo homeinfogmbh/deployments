@@ -38,11 +38,12 @@ def all_deployments() -> dict[int, list[dict]]:
 def get_address(address: dict) -> Address:
     """Returns the respective address."""
 
-    street = address['street']
-    house_number = address['houseNumber']
-    zip_code = address['zipCode']
-    city = address['city']
-    return Address.add(street, house_number, zip_code, city)
+    return Address.add(
+        address['street'],
+        address['houseNumber'],
+        address['zipCode'],
+        address['city']
+    )
 
 
 def get_deployment(ident: int) -> Deployment:
