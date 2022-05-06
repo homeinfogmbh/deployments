@@ -29,8 +29,9 @@ def all_deployments() -> dict[int, list[dict]]:
     deployments = defaultdict(list)
 
     for deployment in Deployment.select(cascade=True).where(True):
-        json = deployment.to_json(systems=True, skip=['customer'], cascade=2)
-        deployments[deployment.customer.id].append(json)
+        deployments[deployment.customer.id].append(
+            deployment.to_json(systems=True, skip=['customer'], cascade=2)
+        )
 
     return deployments
 
@@ -49,9 +50,10 @@ def get_address(address: dict) -> Address:
 def get_deployment(ident: int) -> Deployment:
     """Returns the respective deployment."""
 
-    condition = Deployment.customer == CUSTOMER.id
-    condition &= Deployment.id == ident
-    return Deployment.select(cascade=True).where(condition).get()
+    return Deployment.select(cascade=True).where(
+        (Deployment.customer == CUSTOMER.id)
+        & (Deployment.id == ident)
+    ).get()
 
 
 def can_be_modified(deployment: Deployment):
@@ -60,9 +62,7 @@ def can_be_modified(deployment: Deployment):
     if ACCOUNT.root:
         return True
 
-    systems = [system.id for system in deployment.systems]
-
-    if systems:
+    if systems := [system.id for system in deployment.systems]:
         raise JSONMessage(
             'Systems have already been deployed here.', systems=systems,
             status=403
@@ -101,9 +101,8 @@ def add() -> JSONMessage:
 
     type_ = DeploymentType(request.json['type'])
     connection = Connection(request.json['connection'])
-    address = request.json.get('address')
 
-    if not address:
+    if not (address := request.json.get('address')):
         return JSONMessage('No address specified.', status=400)
 
     address = get_address(address)
@@ -126,7 +125,8 @@ def add() -> JSONMessage:
     deployment = Deployment(
         customer=CUSTOMER.id, type=type_, connection=connection,
         address=address, lpt_address=lpt_address, weather=weather,
-        scheduled=scheduled, annotation=annotation, testing=testing)
+        scheduled=scheduled, annotation=annotation, testing=testing
+    )
     deployment.save()
     return JSONMessage('Deployment added.', id=deployment.id, status=201)
 
@@ -137,8 +137,7 @@ def add() -> JSONMessage:
 def patch(ident: int) -> JSONMessage:
     """Modifies the respective deployment."""
 
-    deployment = get_deployment(ident)
-    can_be_modified(deployment)
+    can_be_modified(deployment := get_deployment(ident))
 
     try:
         with suppress(KeyError):
@@ -152,16 +151,12 @@ def patch(ident: int) -> JSONMessage:
     except ValueError:
         return JSONMessage('Invalid connection.', status=400)
 
-    address = request.json.get('address')
-
-    if address:
+    if address := request.json.get('address'):
         address = get_address(address)
         address.save()
         deployment.address = address
 
-    lpt_address = request.json.get('lptAddress')
-
-    if lpt_address:
+    if lpt_address := request.json.get('lptAddress'):
         lpt_address = get_address(lpt_address)
         lpt_address.save()
         deployment.lpt_address = lpt_address
@@ -190,9 +185,7 @@ def patch(ident: int) -> JSONMessage:
 def delete(ident: int) -> JSONMessage:
     """Deletes the respective deployment."""
 
-    deployment = get_deployment(ident)
-
-    if can_be_modified(deployment):
+    if can_be_modified(deployment := get_deployment(ident)):
         deployment.delete_instance()
 
     return JSONMessage('Deployment deleted.', status=200)
