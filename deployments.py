@@ -164,10 +164,10 @@ def patch(ident: int) -> JSONMessage:
     with suppress(KeyError):
         deployment.weather = request.json['weather']
 
-    if (scheduled := request.json.get('scheduled')) is None:
-        return JSONMessage('Invalid connection.', status=400)
+    if (scheduled := request.json.get('scheduled')) is not None:
+        scheduled = datetime.fromisoformat(scheduled)
 
-    deployment.scheduled = datetime.fromisoformat(scheduled)
+    deployment.scheduled = scheduled
 
     with suppress(KeyError):
         deployment.annotation = request.json['annotation']
