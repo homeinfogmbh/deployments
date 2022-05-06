@@ -139,17 +139,17 @@ def patch(ident: int) -> JSONMessage:
 
     can_be_modified(deployment := get_deployment(ident))
 
-    try:
-        with suppress(KeyError):
-            deployment.type = DeploymentType(request.json['type'])
-    except ValueError:
-        return JSONMessage('Invalid type.', status=400)
+    if type_ := request.json.get('type'):
+        try:
+            deployment.type = DeploymentType(type_)
+        except ValueError:
+            return JSONMessage('Invalid type.', status=400)
 
-    try:
-        with suppress(KeyError):
-            deployment.connection = Connection(request.json['connection'])
-    except ValueError:
-        return JSONMessage('Invalid connection.', status=400)
+    if connection := request.json.get('connection'):
+        try:
+            deployment.connection = Connection(connection)
+        except ValueError:
+            return JSONMessage('Invalid connection.', status=400)
 
     if address := request.json.get('address'):
         address = get_address(address)
