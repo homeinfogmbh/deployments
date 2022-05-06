@@ -164,12 +164,8 @@ def patch(ident: int) -> JSONMessage:
     with suppress(KeyError):
         deployment.weather = request.json['weather']
 
-    try:
-        scheduled = request.json['scheduled']
-    except KeyError:
-        pass
-    else:
-        if scheduled is not None:
+    with suppress(KeyError):
+        if (scheduled := request.json['scheduled']) is not None:
             scheduled = datetime.fromisoformat(scheduled)
 
         deployment.scheduled = scheduled
