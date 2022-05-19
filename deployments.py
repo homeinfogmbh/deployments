@@ -3,17 +3,19 @@
 from collections import defaultdict
 from contextlib import suppress
 from datetime import datetime
+from typing import Union
 
 from flask import request
 
 from his import ACCOUNT
 from his import CUSTOMER
+from his import Account
 from his import authenticated
 from his import authorized
 from his import root
 from his import Application
 from hwdb import Connection, Deployment, DeploymentType
-from mdb import Address
+from mdb import Address, Customer
 from wsgilib import JSON, JSONMessage
 
 
@@ -47,19 +49,19 @@ def get_address(address: dict) -> Address:
     )
 
 
-def get_deployment(ident: int) -> Deployment:
+def get_deployment(ident: int, customer: Union[Customer, int]) -> Deployment:
     """Returns the respective deployment."""
 
     return Deployment.select(cascade=True).where(
-        (Deployment.customer == CUSTOMER.id)
-        & (Deployment.id == ident)
+        (Deployment.id == ident)
+        & (Deployment.customer == customer)
     ).get()
 
 
-def can_be_modified(deployment: Deployment):
+def can_be_modified(deployment: Deployment, account: Account) -> bool:
     """Checks whether the deployment may be modified."""
 
-    if ACCOUNT.root:
+    if account.root:
         return True
 
     if systems := [system.id for system in deployment.systems]:
@@ -137,7 +139,10 @@ def add() -> JSONMessage:
 def patch(ident: int) -> JSONMessage:
     """Modifies the respective deployment."""
 
-    can_be_modified(deployment := get_deployment(ident))
+    can_be_modified(
+        deployment := get_deployment(ident, CUSTOMER.id),
+        ACCOUNT.id
+    )
 
     if type_ := request.json.get('type'):
         try:
@@ -186,7 +191,10 @@ def patch(ident: int) -> JSONMessage:
 def delete(ident: int) -> JSONMessage:
     """Deletes the respective deployment."""
 
-    if can_be_modified(deployment := get_deployment(ident)):
+    if can_be_modified(
+            deployment := get_deployment(ident, CUSTOMER.id),
+            ACCOUNT.id
+    ):
         deployment.delete_instance()
 
     return JSONMessage('Deployment deleted.', status=200)
