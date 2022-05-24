@@ -139,10 +139,7 @@ def add() -> JSONMessage:
 def patch(ident: int) -> JSONMessage:
     """Modifies the respective deployment."""
 
-    can_be_modified(
-        deployment := get_deployment(ident, CUSTOMER.id),
-        ACCOUNT.id
-    )
+    can_be_modified(deployment := get_deployment(ident, CUSTOMER.id), ACCOUNT)
 
     if type_ := request.json.get('type'):
         try:
@@ -192,8 +189,7 @@ def delete(ident: int) -> JSONMessage:
     """Deletes the respective deployment."""
 
     if can_be_modified(
-            deployment := get_deployment(ident, CUSTOMER.id),
-            ACCOUNT.id
+            deployment := get_deployment(ident, CUSTOMER.id), ACCOUNT
     ):
         deployment.delete_instance()
 
