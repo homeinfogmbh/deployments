@@ -1,4 +1,4 @@
-"""HIS service to handle system deployments."""
+"""Manage deployments."""
 
 from contextlib import suppress
 from datetime import datetime
@@ -10,7 +10,6 @@ from his import CUSTOMER
 from his import authenticated
 from his import authorized
 from his import root
-from his import Application
 from hwdb import Connection, Deployment, DeploymentType
 from wsgilib import JSON, JSONMessage
 
@@ -20,13 +19,17 @@ from deployments.functions import get_address
 from deployments.functions import get_deployment
 
 
-__all__ = ['APPLICATION']
+__all__ = ['all_', 'list_', 'add', 'patch', 'delete']
 
 
-APPLICATION = Application('Deployments', debug=True)
+@authenticated
+@root
+def all_() -> JSON:
+    """Lists all customers' deployments."""
+
+    return JSON(all_deployments())
 
 
-@APPLICATION.route('/', methods=['GET'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
 def list_() -> JSON:
@@ -39,16 +42,6 @@ def list_() -> JSON:
     ])
 
 
-@APPLICATION.route('/all', methods=['GET'], strict_slashes=False)
-@authenticated
-@root
-def all_() -> JSON:
-    """Lists all customers' deployments."""
-
-    return JSON(all_deployments())
-
-
-@APPLICATION.route('/', methods=['POST'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
 def add() -> JSONMessage:
@@ -84,7 +77,6 @@ def add() -> JSONMessage:
     return JSONMessage('Deployment added.', id=deployment.id, status=201)
 
 
-@APPLICATION.route('/<int:ident>', methods=['PATCH'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
 def patch(ident: int) -> JSONMessage:
@@ -130,7 +122,6 @@ def patch(ident: int) -> JSONMessage:
     return JSONMessage('Deployment patched.', status=200)
 
 
-@APPLICATION.route('/<int:ident>', methods=['DELETE'], strict_slashes=False)
 @authenticated
 @authorized('deployments')
 def delete(ident: int) -> JSONMessage:
@@ -142,24 +133,3 @@ def delete(ident: int) -> JSONMessage:
         deployment.delete_instance()
 
     return JSONMessage('Deployment deleted.', status=200)
-
-
-@APPLICATION.errorhandler(KeyError)
-def handle_key_error(error: KeyError) -> JSONMessage:
-    """Handles key errors."""
-
-    return JSONMessage('Missing JSON key.', key=str(error))
-
-
-@APPLICATION.errorhandler(ValueError)
-def handle_value_error(error: ValueError) -> JSONMessage:
-    """Handles value errors."""
-
-    return JSONMessage('Invalid value.', value=str(error))
-
-
-@APPLICATION.errorhandler(Deployment.DoesNotExist)
-def handle_no_such_deployment(_: Deployment.DoesNotExist) -> JSONMessage:
-    """Handles non-existent deployments."""
-
-    return JSONMessage('No such deployment.', status=404)
