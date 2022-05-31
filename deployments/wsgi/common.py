@@ -27,7 +27,8 @@ def list_() -> JSON:
     """List deployments."""
 
     return JSON([
-        deployment.to_json() for deployment in get_deployments(ACCOUNT)
+        deployment.to_json(address=True, customer=True)
+        for deployment in get_deployments(ACCOUNT)
     ])
 
 
@@ -36,7 +37,9 @@ def list_() -> JSON:
 def get(ident: int) -> JSON:
     """List the given deployment."""
 
-    return JSON(get_deployment(ident, ACCOUNT).to_json())
+    return JSON(get_deployment(ident, ACCOUNT).to_json(
+        address=True, customer=True
+    ))
 
 
 @authenticated
