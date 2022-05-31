@@ -1,76 +1,29 @@
 """HIS service to handle system deployments."""
 
-from collections import defaultdict
 from contextlib import suppress
 from datetime import datetime
-from typing import Union
 
 from flask import request
 
 from his import ACCOUNT
 from his import CUSTOMER
-from his import Account
 from his import authenticated
 from his import authorized
 from his import root
 from his import Application
 from hwdb import Connection, Deployment, DeploymentType
-from mdb import Address, Customer
 from wsgilib import JSON, JSONMessage
+
+from deployments.functions import all_deployments
+from deployments.functions import can_be_modified
+from deployments.functions import get_address
+from deployments.functions import get_deployment
 
 
 __all__ = ['APPLICATION']
 
 
 APPLICATION = Application('Deployments', debug=True)
-
-
-def all_deployments() -> dict[int, list[dict]]:
-    """Yields a JSON-ish dict of all deployments."""
-
-    deployments = defaultdict(list)
-
-    for deployment in Deployment.select(cascade=True).where(True):
-        deployments[deployment.customer.id].append(
-            deployment.to_json(systems=True, skip=['customer'], cascade=2)
-        )
-
-    return deployments
-
-
-def get_address(address: dict) -> Address:
-    """Returns the respective address."""
-
-    return Address.add(
-        address['street'],
-        address['houseNumber'],
-        address['zipCode'],
-        address['city']
-    )
-
-
-def get_deployment(ident: int, customer: Union[Customer, int]) -> Deployment:
-    """Returns the respective deployment."""
-
-    return Deployment.select(cascade=True).where(
-        (Deployment.id == ident)
-        & (Deployment.customer == customer)
-    ).get()
-
-
-def can_be_modified(deployment: Deployment, account: Account) -> bool:
-    """Checks whether the deployment may be modified."""
-
-    if account.root:
-        return True
-
-    if systems := [system.id for system in deployment.systems]:
-        raise JSONMessage(
-            'Systems have already been deployed here.', systems=systems,
-            status=403
-        )
-
-    return True
 
 
 @APPLICATION.route('/', methods=['GET'], strict_slashes=False)

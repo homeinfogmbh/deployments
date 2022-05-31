@@ -20,7 +20,7 @@ setup(
         'mdb',
         'wsgilib'
     ],
-    py_modules=['deployments'],
+    packages=['deployments'],
     license='GPLv3',
     description='HIS microservice to handle digital sigange deployments.'
 )
