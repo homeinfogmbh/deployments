@@ -1,33 +1,26 @@
 """Common functions."""
 
-from collections import defaultdict
-from typing import Union
-
 from his import Account
 from hwdb import Deployment
 from mdb import Address, Customer
 from wsgilib import JSONMessage
 
+from flask import Request
+from peewee import Select
+
+from deployments.authorization import can_administer
+from deployments.authorization import get_administered_customers
+from deployments.authorization import is_admin
+
 
 __all__ = [
-    'all_deployments',
     'can_be_modified',
     'get_address',
-    'get_deployment'
+    'get_customer',
+    'get_customers',
+    'get_deployment',
+    'get_deployments'
 ]
-
-
-def all_deployments() -> dict[int, list[dict]]:
-    """Yields a JSON-ish dict of all deployments."""
-
-    deployments = defaultdict(list)
-
-    for deployment in Deployment.select(cascade=True).where(True):
-        deployments[deployment.customer.id].append(
-            deployment.to_json(systems=True, skip=['customer'], cascade=2)
-        )
-
-    return deployments
 
 
 def can_be_modified(deployment: Deployment, account: Account) -> bool:
@@ -56,10 +49,58 @@ def get_address(address: dict) -> Address:
     )
 
 
-def get_deployment(ident: int, customer: Union[Customer, int]) -> Deployment:
-    """Returns the respective deployment."""
+def get_customer(request: Request, account: Account) -> Customer:
+    """Returns the target customer."""
+
+    if (customer := request.json.pop('customer', None)) is None:
+        return account.customer
+
+    try:
+        customer = Customer.select(cascade=True).where(
+            Customer.id == customer
+        ).get()
+    except Customer.DoesNotExist:
+        raise JSONMessage('No such customer.', status=404)
+
+    if can_administer(account, customer):
+        return customer
+
+    raise JSONMessage('Cannot administer the given customer.', status=403)
+
+
+def get_customers(account: Account) -> Select:
+    """Lists available customers."""
+
+    if account.root:
+        return Customer.select(cascade=True)
+
+    if is_admin(account):
+        return Customer.select(cascade=True).where(
+            (Customer.id << set(get_administered_customers(account)))
+            | (Customer.id == account.customer)
+        )
+
+    return Customer.select(cascade=True).where(Customer.id == account.customer)
+
+
+def get_deployment(ident: int, account: Account) -> Deployment:
+    """Returns the selected order of the given customer."""
+
+    return get_deployments(account).where(Deployment.id == ident).get()
+
+
+def get_deployments(account: Account) -> Select:
+    """Returns the selected deployments."""
+
+    if account.root:
+        return Deployment.select(cascade=True).where(True)
+
+    if is_admin(account):
+        return Deployment.select(cascade=True).where(
+            (Deployment.customer << set(get_administered_customers(account)))
+            | (Deployment.customer == account.customer)
+        )
 
     return Deployment.select(cascade=True).where(
-        (Deployment.id == ident)
-        & (Deployment.customer == customer)
-    ).get()
+        Deployment.customer == account.customer
+    )

@@ -18,6 +18,8 @@ setup(
         'his',
         'hwdb',
         'mdb',
+        'peewee',
+        'peeweeplus',
         'wsgilib'
     ],
     packages=['deployments'],

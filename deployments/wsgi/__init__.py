@@ -4,22 +4,18 @@ from his import Application
 from hwdb import Deployment
 from wsgilib import JSONMessage
 
-from deployments.wsgi.manage import all_, list_, add, patch, delete
+from deployments.wsgi import administration, checklist, common, metadata
 
 
 __all__ = ['APPLICATION']
 
 
 APPLICATION = Application('Deployments', debug=True)
-APPLICATION.route('/all', methods=['GET'], strict_slashes=False)(all_)
-APPLICATION.route('/', methods=['GET'], strict_slashes=False)(list_)
-APPLICATION.route('/', methods=['POST'], strict_slashes=False)(add)
-APPLICATION.route('/<int:ident>', methods=['PATCH'], strict_slashes=False)(
-    patch
+ROUTES = (
+    *administration.ROUTES, *checklist.ROUTES, *common.ROUTES,
+    *metadata.ROUTES
 )
-APPLICATION.route('/<int:ident>', methods=['DELETE'], strict_slashes=False)(
-    delete
-)
+APPLICATION.add_routes(ROUTES)
 
 
 @APPLICATION.errorhandler(KeyError)
