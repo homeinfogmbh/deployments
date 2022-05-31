@@ -117,8 +117,6 @@ def add() -> JSONMessage:
     else:
         lpt_address = None
 
-    weather = request.json.get('weather')
-
     if (scheduled := request.json.get('scheduled')) is not None:
         scheduled = datetime.fromisoformat(scheduled)
 
@@ -126,8 +124,8 @@ def add() -> JSONMessage:
     testing = request.json.get('testing')
     deployment = Deployment(
         customer=CUSTOMER.id, type=type_, connection=connection,
-        address=address, lpt_address=lpt_address, weather=weather,
-        scheduled=scheduled, annotation=annotation, testing=testing
+        address=address, lpt_address=lpt_address, scheduled=scheduled,
+        annotation=annotation, testing=testing
     )
     deployment.save()
     return JSONMessage('Deployment added.', id=deployment.id, status=201)
@@ -162,9 +160,6 @@ def patch(ident: int) -> JSONMessage:
         lpt_address = get_address(lpt_address)
         lpt_address.save()
         deployment.lpt_address = lpt_address
-
-    with suppress(KeyError):
-        deployment.weather = request.json['weather']
 
     with suppress(KeyError):
         if (scheduled := request.json['scheduled']) is not None:
