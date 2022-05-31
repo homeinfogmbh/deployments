@@ -22,7 +22,7 @@ setup(
         'peeweeplus',
         'wsgilib'
     ],
-    packages=['deployments'],
+    packages=['deployments', 'deployments.wsgi'],
     license='GPLv3',
     description='HIS microservice to handle digital sigange deployments.'
 )
