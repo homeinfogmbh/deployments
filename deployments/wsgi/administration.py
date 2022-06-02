@@ -16,7 +16,7 @@ __all__ = ['ROUTES']
 
 
 @authenticated
-@authorized('ddborder')
+@authorized('deployments')
 def add() -> JSONMessage:
     """Add a new deployment."""
 
@@ -39,7 +39,7 @@ def add() -> JSONMessage:
 
 
 @authenticated
-@authorized('ddborder')
+@authorized('deployments')
 def delete(ident: int) -> JSONMessage:
     """Removes a deployment."""
 

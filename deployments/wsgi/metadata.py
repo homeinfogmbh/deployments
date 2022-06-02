@@ -12,7 +12,7 @@ __all__ = ['ROUTES']
 
 
 @authenticated
-@authorized('ddborder')
+@authorized('deployments')
 def list_customers() -> JSON:
     """Lists customers."""
 
@@ -22,7 +22,7 @@ def list_customers() -> JSON:
 
 
 @authenticated
-@authorized('ddborder')
+@authorized('deployments')
 def list_deployments() -> JSON:
     """Lists deployments."""
 
@@ -33,7 +33,7 @@ def list_deployments() -> JSON:
 
 
 @authenticated
-@authorized('ddborder')
+@authorized('deployments')
 def list_hw_models() -> JSON:
     """Lists hardware models."""
 
@@ -41,7 +41,7 @@ def list_hw_models() -> JSON:
 
 
 @authenticated
-@authorized('ddborder')
+@authorized('deployments')
 def is_admin_() -> JSON:
     """Returns whether the customer is an admin."""
 

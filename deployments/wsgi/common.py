@@ -22,7 +22,7 @@ __all__ = ['ROUTES']
 
 
 @authenticated
-@authorized('ddborder')
+@authorized('deployments')
 def list_() -> JSON:
     """List deployments."""
 
@@ -33,7 +33,7 @@ def list_() -> JSON:
 
 
 @authenticated
-@authorized('ddborder')
+@authorized('deployments')
 def get(ident: int) -> JSON:
     """List the given deployment."""
 

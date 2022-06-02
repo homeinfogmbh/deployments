@@ -15,7 +15,7 @@ __all__ = ['ROUTES']
 
 
 @authenticated
-@authorized('ddborder')
+@authorized('deployments')
 @ddb_admin
 def update_technician_annotation(ident: int) -> JSONMessage:
     """Update the annotation of a deployment."""
@@ -27,7 +27,7 @@ def update_technician_annotation(ident: int) -> JSONMessage:
 
 
 @authenticated
-@authorized('ddborder')
+@authorized('deployments')
 @ddb_admin
 def set_construction_site_preparation(ident: int) -> JSONMessage:
     """Set the construction site preparation feedback flag."""
@@ -46,7 +46,7 @@ def set_construction_site_preparation(ident: int) -> JSONMessage:
 
 
 @authenticated
-@authorized('ddborder')
+@authorized('deployments')
 @ddb_admin
 def set_internet_connection(ident: int) -> JSONMessage:
     """Set the internet connection flag."""
@@ -63,7 +63,7 @@ def set_internet_connection(ident: int) -> JSONMessage:
 
 
 @authenticated
-@authorized('ddborder')
+@authorized('deployments')
 @ddb_admin
 def set_hardware_installation(ident: int) -> JSONMessage:
     """Set the hardware installation flag."""
