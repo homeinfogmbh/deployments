@@ -32,6 +32,7 @@ def add() -> JSONMessage:
         type=DeploymentType.DDB,
         connection=Connection[request.json['connection']],
         address=address,
+        annotation=request.json.get('annotation'),
         timestamp=datetime.now()
     )
     deployment.save()
