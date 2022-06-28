@@ -21,10 +21,10 @@ def add() -> JSONMessage:
     """Add a new deployment."""
 
     address = Address.add(
-        request.json['street'],
-        request.json['houseNumber'],
-        request.json['zipCode'],
-        request.json['city']
+        request.json['address']['street'],
+        request.json['address']['houseNumber'],
+        request.json['address']['zipCode'],
+        request.json['address']['city']
     )
     address.save()
     deployment = Deployment(
