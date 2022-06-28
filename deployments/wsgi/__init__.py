@@ -22,14 +22,14 @@ APPLICATION.add_routes(ROUTES)
 def handle_key_error(error: KeyError) -> JSONMessage:
     """Handles key errors."""
 
-    return JSONMessage('Missing JSON key.', key=str(error), status=400)
+    return JSONMessage('Missing JSON key.', key=error.args[0], status=400)
 
 
 @APPLICATION.errorhandler(ValueError)
 def handle_value_error(error: ValueError) -> JSONMessage:
     """Handles value errors."""
 
-    return JSONMessage('Invalid value.', value=str(error), status=400)
+    return JSONMessage('Invalid value.', value=error.args[0], status=400)
 
 
 @APPLICATION.errorhandler(Deployment.DoesNotExist)
