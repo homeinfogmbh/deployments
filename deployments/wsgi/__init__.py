@@ -7,14 +7,11 @@ from wsgilib import JSONMessage
 from deployments.wsgi import administration, checklist, common, metadata
 
 
-__all__ = ['APPLICATION']
+__all__ = ["APPLICATION"]
 
 
-APPLICATION = Application('Deployments', debug=True)
-ROUTES = (
-    *administration.ROUTES, *checklist.ROUTES, *common.ROUTES,
-    *metadata.ROUTES
-)
+APPLICATION = Application("Deployments", debug=True)
+ROUTES = (*administration.ROUTES, *checklist.ROUTES, *common.ROUTES, *metadata.ROUTES)
 APPLICATION.add_routes(ROUTES)
 
 
@@ -22,18 +19,18 @@ APPLICATION.add_routes(ROUTES)
 def handle_key_error(error: KeyError) -> JSONMessage:
     """Handles key errors."""
 
-    return JSONMessage('Missing JSON key.', key=error.args[0], status=400)
+    return JSONMessage("Missing JSON key.", key=error.args[0], status=400)
 
 
 @APPLICATION.errorhandler(ValueError)
 def handle_value_error(error: ValueError) -> JSONMessage:
     """Handles value errors."""
 
-    return JSONMessage('Invalid value.', value=error.args[0], status=400)
+    return JSONMessage("Invalid value.", value=error.args[0], status=400)
 
 
 @APPLICATION.errorhandler(Deployment.DoesNotExist)
 def handle_no_such_deployment(_: Deployment.DoesNotExist) -> JSONMessage:
     """Handles non-existent deployments."""
 
-    return JSONMessage('No such deployment.', status=404)
+    return JSONMessage("No such deployment.", status=404)

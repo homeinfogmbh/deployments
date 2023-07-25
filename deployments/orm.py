@@ -9,10 +9,10 @@ from mdb import Company, Customer
 from peeweeplus import JSONModel, MySQLDatabaseProxy
 
 
-__all__ = ['Admin', 'CustomerAdmin']
+__all__ = ["Admin", "CustomerAdmin"]
 
 
-DATABASE = MySQLDatabaseProxy('deployments')
+DATABASE = MySQLDatabaseProxy("deployments")
 
 
 class DeploymentModel(JSONModel):
@@ -26,9 +26,7 @@ class DeploymentModel(JSONModel):
 class Admin(DeploymentModel):
     """Accounts that are allowed to process orders."""
 
-    account = ForeignKeyField(
-        Account, column_name='account', on_delete='CASCADE'
-    )
+    account = ForeignKeyField(Account, column_name="account", on_delete="CASCADE")
 
     @classmethod
     def select(cls, *args, cascade: bool = False) -> Select:
@@ -44,11 +42,7 @@ class CustomerAdmin(DeploymentModel):
     """Mappings of accounts and customers which can be administered."""
 
     class Meta:
-        table_name = 'customer_admin'
+        table_name = "customer_admin"
 
-    account = ForeignKeyField(
-        Account, column_name='account', on_delete='CASCADE'
-    )
-    customer = ForeignKeyField(
-        Customer, column_name='customer', on_delete='CASCADE'
-    )
+    account = ForeignKeyField(Account, column_name="account", on_delete="CASCADE")
+    customer = ForeignKeyField(Customer, column_name="customer", on_delete="CASCADE")

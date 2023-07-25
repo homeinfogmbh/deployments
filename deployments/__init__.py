@@ -3,4 +3,4 @@
 from deployments.wsgi import APPLICATION
 
 
-__all__ = ['APPLICATION']
+__all__ = ["APPLICATION"]

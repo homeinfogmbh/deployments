@@ -8,32 +8,29 @@ from deployments.authorization import is_admin
 from deployments.functions import get_customers, get_deployments
 
 
-__all__ = ['ROUTES']
+__all__ = ["ROUTES"]
 
 
 @authenticated
-@authorized('deployments')
+@authorized("deployments")
 def list_customers() -> JSON:
     """Lists customers."""
 
-    return JSON([
-        customer.to_json(company=True) for customer in get_customers(ACCOUNT)
-    ])
+    return JSON([customer.to_json(company=True) for customer in get_customers(ACCOUNT)])
 
 
 @authenticated
-@authorized('deployments')
+@authorized("deployments")
 def list_deployments() -> JSON:
     """Lists deployments."""
 
-    return JSON([
-        dep.to_json(address=True, customer=True)
-        for dep in get_deployments(ACCOUNT)
-    ])
+    return JSON(
+        [dep.to_json(address=True, customer=True) for dep in get_deployments(ACCOUNT)]
+    )
 
 
 @authenticated
-@authorized('deployments')
+@authorized("deployments")
 def list_hw_models() -> JSON:
     """Lists hardware models."""
 
@@ -41,7 +38,7 @@ def list_hw_models() -> JSON:
 
 
 @authenticated
-@authorized('deployments')
+@authorized("deployments")
 def is_admin_() -> JSON:
     """Returns whether the customer is an admin."""
 
@@ -49,8 +46,8 @@ def is_admin_() -> JSON:
 
 
 ROUTES = [
-    ('GET', '/customers', list_customers),
-    ('GET', '/deployments', list_deployments),
-    ('GET', '/hw-models', list_hw_models),
-    ('GET', '/is-admin', is_admin_)
+    ("GET", "/customers", list_customers),
+    ("GET", "/deployments", list_deployments),
+    ("GET", "/hw-models", list_hw_models),
+    ("GET", "/is-admin", is_admin_),
 ]

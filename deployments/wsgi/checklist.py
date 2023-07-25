@@ -11,11 +11,11 @@ from deployments.decorators import ddb_admin
 from deployments.functions import get_deployment
 
 
-__all__ = ['ROUTES']
+__all__ = ["ROUTES"]
 
 
 @authenticated
-@authorized('deployments')
+@authorized("deployments")
 @ddb_admin
 def update_technician_annotation(ident: int) -> JSONMessage:
     """Update the annotation of a deployment."""
@@ -23,11 +23,11 @@ def update_technician_annotation(ident: int) -> JSONMessage:
     deployment = get_deployment(ident, ACCOUNT)
     deployment.technician_annotation = request.json
     deployment.save()
-    return JSONMessage('Technician annotation updated.', 200)
+    return JSONMessage("Technician annotation updated.", 200)
 
 
 @authenticated
-@authorized('deployments')
+@authorized("deployments")
 @ddb_admin
 def set_construction_site_preparation(ident: int) -> JSONMessage:
     """Set the construction site preparation feedback flag."""
@@ -40,13 +40,11 @@ def set_construction_site_preparation(ident: int) -> JSONMessage:
         deployment.construction_site_preparation_feedback = None
 
     deployment.save()
-    return JSONMessage(
-        'Construction site preparation feedback updated.', status=200
-    )
+    return JSONMessage("Construction site preparation feedback updated.", status=200)
 
 
 @authenticated
-@authorized('deployments')
+@authorized("deployments")
 @ddb_admin
 def set_internet_connection(ident: int) -> JSONMessage:
     """Set the internet connection flag."""
@@ -59,11 +57,11 @@ def set_internet_connection(ident: int) -> JSONMessage:
         deployment.internet_connection = None
 
     deployment.save()
-    return JSONMessage('Internet connection set.', status=200)
+    return JSONMessage("Internet connection set.", status=200)
 
 
 @authenticated
-@authorized('deployments')
+@authorized("deployments")
 @ddb_admin
 def set_hardware_installation(ident: int) -> JSONMessage:
     """Set the hardware installation flag."""
@@ -76,16 +74,16 @@ def set_hardware_installation(ident: int) -> JSONMessage:
         deployment.hardware_installation = None
 
     deployment.save()
-    return JSONMessage('Hardware installation set.', status=200)
+    return JSONMessage("Hardware installation set.", status=200)
 
 
 ROUTES = [
-    ('PATCH', '/<int:ident>/annotation', update_technician_annotation),
+    ("PATCH", "/<int:ident>/annotation", update_technician_annotation),
     (
-        'POST',
-        '/<int:ident>/construction-site-preparation',
-        set_construction_site_preparation
+        "POST",
+        "/<int:ident>/construction-site-preparation",
+        set_construction_site_preparation,
     ),
-    ('POST', '/<int:ident>/internet-connection', set_internet_connection),
-    ('POST', '/<int:ident>/hardware-installation', set_hardware_installation)
+    ("POST", "/<int:ident>/internet-connection", set_internet_connection),
+    ("POST", "/<int:ident>/hardware-installation", set_hardware_installation),
 ]

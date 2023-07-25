@@ -14,12 +14,12 @@ from deployments.authorization import is_admin
 
 
 __all__ = [
-    'can_be_modified',
-    'get_address',
-    'get_customer',
-    'get_customers',
-    'get_deployment',
-    'get_deployments'
+    "can_be_modified",
+    "get_address",
+    "get_customer",
+    "get_customers",
+    "get_deployment",
+    "get_deployments",
 ]
 
 
@@ -31,8 +31,7 @@ def can_be_modified(deployment: Deployment, account: Account) -> bool:
 
     if systems := [system.id for system in deployment.systems]:
         raise JSONMessage(
-            'Systems have already been deployed here.', systems=systems,
-            status=403
+            "Systems have already been deployed here.", systems=systems, status=403
         )
 
     return True
@@ -42,30 +41,25 @@ def get_address(address: dict) -> Address:
     """Returns the respective address."""
 
     return Address.add(
-        address['street'],
-        address['houseNumber'],
-        address['zipCode'],
-        address['city']
+        address["street"], address["houseNumber"], address["zipCode"], address["city"]
     )
 
 
 def get_customer(request: Request, account: Account) -> Customer:
     """Returns the target customer."""
 
-    if (customer := request.json.pop('customer', None)) is None:
+    if (customer := request.json.pop("customer", None)) is None:
         return account.customer
 
     try:
-        customer = Customer.select(cascade=True).where(
-            Customer.id == customer
-        ).get()
+        customer = Customer.select(cascade=True).where(Customer.id == customer).get()
     except Customer.DoesNotExist:
-        raise JSONMessage('No such customer.', status=404)
+        raise JSONMessage("No such customer.", status=404)
 
     if can_administer(account, customer):
         return customer
 
-    raise JSONMessage('Cannot administer the given customer.', status=403)
+    raise JSONMessage("Cannot administer the given customer.", status=403)
 
 
 def get_customers(account: Account) -> Select:

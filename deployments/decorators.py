@@ -9,7 +9,7 @@ from wsgilib import JSONMessage
 from deployments.authorization import is_admin
 
 
-__all__ = ['ddb_admin']
+__all__ = ["ddb_admin"]
 
 
 def ddb_admin(function: Callable[..., Any]) -> Callable[..., Any]:
@@ -20,6 +20,6 @@ def ddb_admin(function: Callable[..., Any]) -> Callable[..., Any]:
         if ACCOUNT.root or is_admin(ACCOUNT):
             return function(*args, **kwargs)
 
-        return JSONMessage('Unauthorized.', status=403)
+        return JSONMessage("Unauthorized.", status=403)
 
     return wrapper
