@@ -9,7 +9,7 @@ from hwdb import Connection, Deployment, DeploymentType
 from mdb import Address
 from wsgilib import JSONMessage
 
-from deployments.functions import get_customer, get_deployment
+from deployments.functions import get_customer, get_deployment,new_deployment_mail
 
 
 __all__ = ["ROUTES"]
@@ -36,6 +36,7 @@ def add() -> JSONMessage:
         timestamp=datetime.now(),
     )
     deployment.save()
+    new_deployment_mail("reallyme@gmx.net", deployment)
     return JSONMessage("Deployment added.", id=deployment.id, status=201)
 
 

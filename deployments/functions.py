@@ -4,6 +4,8 @@ from his import Account
 from hwdb import Deployment
 from mdb import Address, Customer
 from wsgilib import JSONMessage
+from emaillib import EMailsNotSent, Mailer, EMail
+from configlib import load_config
 
 from flask import Request
 from peewee import Select
@@ -20,7 +22,23 @@ __all__ = [
     "get_customers",
     "get_deployment",
     "get_deployments",
+    "new_deployment_mail"
 ]
+
+
+def new_deployment_mail(email, deployment: Deployment):
+    sender = "service@dasdigitalebrett.de"
+    mailbody="Guten Tag,<br><br>Folgender Standort wurde angelegt:<br>"
+    mailbody=mailbody+"Kunde: <b>"+deployment.customer.name+"</b><br>"
+    mailbody=mailbody+"Adresse: <b>"+str(deployment.address)+"</b><br>"
+    mail= EMail(
+        subject="Homeinfo: Neuer Standort angelegt",
+        sender=sender,
+        recipient=email,
+        html=mailbody,
+    )
+    Mailer.from_config(load_config("sysmon.conf")).send([mail])
+
 
 
 def can_be_modified(deployment: Deployment, account: Account) -> bool:
