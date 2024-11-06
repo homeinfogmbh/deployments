@@ -36,7 +36,8 @@ def add() -> JSONMessage:
         timestamp=datetime.now(),
     )
     deployment.save()
-    new_deployment_mail("reallyme@gmx.net", deployment)
+    new_deployment_mail("mb@mieterinfo.tv",deployment)
+    new_deployment_mail("s.dissmer@support.homeinfo.de", deployment)
     return JSONMessage("Deployment added.", id=deployment.id, status=201)
 
 
