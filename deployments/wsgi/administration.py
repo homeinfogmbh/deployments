@@ -60,7 +60,7 @@ def confirm(id : str) -> JSONMessage:
     """Confirms a deployment"""
     password = load_config("sysmon.conf").get("mailing", "encryptionpassword")
     id = password_decrypt(urllib.parse.unquote_plus(id),password)
-    dep = DeploymentTemp.select(cascade=True).where(DeploymentTemp.id == id)
+    dep = DeploymentTemp.select(cascade=True).where(DeploymentTemp.id == id).get()
     deployment = Deployment(
         customer=dep.customer,
         type=dep.type,
