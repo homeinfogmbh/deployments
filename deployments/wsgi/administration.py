@@ -3,14 +3,16 @@
 from datetime import datetime
 
 from flask import request
+import urllib.parse
 
+
+from configlib import load_config
 from his import ACCOUNT, authenticated, authorized
 from hwdb import Connection, Deployment, DeploymentType,DeploymentTemp
 from mdb import Address
 from wsgilib import JSONMessage
 
-from deployments.functions import get_customer, get_deployment,new_deployment_mail
-
+from deployments.functions import get_customer, get_deployment,new_deployment_mail,password_decrypt
 
 __all__ = ["ROUTES"]
 
@@ -53,5 +55,20 @@ def delete(ident: int) -> JSONMessage:
     deployment.delete_instance()
     return JSONMessage("Order cancelled.", status=200)
 
+def confirm(id):
+    """Confirms a deployment"""
+    password = load_config("sysmon.conf").get("mailing", "encryptionpassword")
+    id = password_decrypt(urllib.parse.unquote_plus(id),password)
+    dep = DeploymentTemp.select().where(DeploymentTemp.id == id)
+    deployment = Deployment(
+        customer=dep.customer,
+        type=dep.type,
+        connection=dep.connection,
+        address=dep.address,
+        annotation=dep.annotation,
+        timestamp=datetime.now(),
+    )
+    deployment.save()
+    return JSONMessage("Deployment confirmed.", id=deployment.id, status=201)
 
-ROUTES = [("POST", "/", add), ("DELETE", "/<int:ident>", delete)]
+ROUTES = [("POST", "/", add), ("DELETE", "/<int:ident>", delete), ("GET", "/<str:id>", confirm)]

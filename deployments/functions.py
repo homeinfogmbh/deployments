@@ -1,7 +1,7 @@
 """Common functions."""
 
 from his import Account
-from hwdb import Deployment
+from hwdb import Deployment, DeploymentTemp
 from mdb import Address, Customer
 from wsgilib import JSONMessage
 from emaillib import EMailsNotSent, Mailer, EMail
@@ -9,6 +9,13 @@ from configlib import load_config
 
 from flask import Request
 from peewee import Select
+import urllib.parse
+import secrets
+from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from deployments.authorization import can_administer
 from deployments.authorization import get_administered_customers
@@ -22,24 +29,24 @@ __all__ = [
     "get_customers",
     "get_deployment",
     "get_deployments",
-    "new_deployment_mail"
+    "new_deployment_mail",
+    "password_decrypt"
 ]
 
+backend = default_backend()
+iterations = 100_000
 
-def new_deployment_mail(email, deployment: Deployment):
+def new_deployment_mail(email, deployment: DeploymentTemp):
     sender = "service@dasdigitalebrett.de"
-    mailbody="Guten Tag,<br><br>Folgender Standort wurde angelegt und wartet auf Freischaltung:<br>"
-    mailbody=mailbody+"Kunde: <b>"+deployment.customer.name+"</b><br>"
-    mailbody=mailbody+"Adresse: <b>"+str(deployment.address)+"</b><br>"
-    mailbody=mailbody+"Freischalten: <a href=''>"+str(deployment.address)+"</a><br>"
-    mail= EMail(
-        subject="Homeinfo: Neuer Standort angelegt",
-        sender=sender,
-        recipient=email,
-        html=mailbody,
-    )
+    password = load_config("sysmon.conf").get("mailing","encryptionpassword")
+    message = str(deployment.id)
+    encrypted_id = password_encrypt(message.encode(), password)
+    mailbody = "Guten Tag,<br><br>Folgender Standort wurde angelegt und wartet auf Freischaltung:<br>"
+    mailbody = mailbody+"Kunde: <b>"+str(deployment.customer.company)+"</b><br>"
+    mailbody = mailbody+"Adresse: <b>"+str(deployment.address)+"</b><br>"
+    mailbody = mailbody+"Freischalten: <a href='https://backend.homeinfo.de/deployments/"+urllib.parse.quote_plus(encrypted_id)+"'>Ja</a><br>"
+    mail= EMail(subject="Homeinfo: Neuer Standort angelegt",sender=sender,recipient=email,html=mailbody)
     Mailer.from_config(load_config("sysmon.conf")).send([mail])
-
 
 
 def can_be_modified(deployment: Deployment, account: Account) -> bool:
@@ -117,3 +124,27 @@ def get_deployments(account: Account) -> Select:
     return Deployment.select(cascade=True).where(
         Deployment.customer == account.customer
     )
+def _derive_key(password: bytes, salt: bytes, iterations: int = iterations) -> bytes:
+    """Derive a secret key from a given password and salt"""
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(), length=32, salt=salt,
+        iterations=iterations, backend=backend)
+    return b64e(kdf.derive(password))
+
+def password_encrypt(message: bytes, password: str, iterations: int = iterations) -> bytes:
+    salt = secrets.token_bytes(16)
+    key = _derive_key(password.encode(), salt, iterations)
+    return b64e(
+        b'%b%b%b' % (
+            salt,
+            iterations.to_bytes(4, 'big'),
+            b64d(Fernet(key).encrypt(message)),
+        )
+    )
+
+def password_decrypt(token: bytes, password: str) -> bytes:
+    decoded = b64d(token)
+    salt, iter, token = decoded[:16], decoded[16:20], b64e(decoded[20:])
+    iterations = int.from_bytes(iter, 'big')
+    key = _derive_key(password.encode(), salt, iterations)
+    return Fernet(key).decrypt(token)
