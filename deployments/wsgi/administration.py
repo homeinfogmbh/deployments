@@ -59,7 +59,7 @@ def delete(ident: int) -> JSONMessage:
 def confirm(id : str) -> JSONMessage:
     """Confirms a deployment"""
     password = load_config("sysmon.conf").get("mailing", "encryptionpassword")
-    id = password_decrypt(urllib.parse.unquote_plus(id),password)
+    id = password_decrypt(urllib.parse.unquote_plus(id),password).decode()
     dep = DeploymentTemp.select(cascade=True).where(DeploymentTemp.id == id).get()
     deployment = Deployment(
         customer=dep.customer,
