@@ -5,7 +5,7 @@ from datetime import datetime
 from flask import request
 
 from his import ACCOUNT, authenticated, authorized
-from hwdb import Connection, Deployment, DeploymentType
+from hwdb import Connection, Deployment, DeploymentType,DeploymentTemp
 from mdb import Address
 from wsgilib import JSONMessage
 
@@ -27,7 +27,7 @@ def add() -> JSONMessage:
         request.json["address"]["city"],
     )
     address.save()
-    deployment = Deployment(
+    deployment = DeploymentTemp(
         customer=get_customer(request, ACCOUNT),
         type=DeploymentType.DDB,
         connection=Connection[request.json["connection"]],
@@ -36,8 +36,9 @@ def add() -> JSONMessage:
         timestamp=datetime.now(),
     )
     deployment.save()
-    new_deployment_mail("mb@mieterinfo.tv",deployment)
-    new_deployment_mail("s.dissmer@support.homeinfo.de", deployment)
+    #new_deployment_mail("mb@mieterinfo.tv",deployment)
+    new_deployment_mail("reallyme@gmx.net", deployment)
+    #new_deployment_mail("s.dissmer@support.homeinfo.de", deployment)
     return JSONMessage("Deployment added.", id=deployment.id, status=201)
 
 

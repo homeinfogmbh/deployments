@@ -28,9 +28,10 @@ __all__ = [
 
 def new_deployment_mail(email, deployment: Deployment):
     sender = "service@dasdigitalebrett.de"
-    mailbody="Guten Tag,<br><br>Folgender Standort wurde angelegt:<br>"
+    mailbody="Guten Tag,<br><br>Folgender Standort wurde angelegt und wartet auf Freischaltung:<br>"
     mailbody=mailbody+"Kunde: <b>"+deployment.customer.name+"</b><br>"
     mailbody=mailbody+"Adresse: <b>"+str(deployment.address)+"</b><br>"
+    mailbody=mailbody+"Freischalten: <a href=''>"+str(deployment.address)+"</a><br>"
     mail= EMail(
         subject="Homeinfo: Neuer Standort angelegt",
         sender=sender,
