@@ -44,8 +44,8 @@ def new_deployment_mail(email, deployment: DeploymentTemp):
     mailbody = "Guten Tag,<br><br>Folgender Standort wurde angelegt und wartet auf Freischaltung:<br>"
     mailbody = mailbody+"Kunde: <b>"+str(deployment.customer.company)+"</b><br>"
     mailbody = mailbody+"Adresse: <b>"+str(deployment.address)+"</b><br>"
-    mailbody = mailbody+"Freischalten: <a href='https://backend.homeinfo.de/deployments/"+urllib.parse.quote_plus(encrypted_id)+"'>Ja</a><br>"
-    mail= EMail(subject="Homeinfo: Neuer Standort angelegt",sender=sender,recipient=email,html=mailbody)
+    mailbody = mailbody+"Freischalten: <a href='https://backend.homeinfo.de/deployments/confirm/"+urllib.parse.quote_plus(encrypted_id)+"'>Ja</a><br>"
+    mail = EMail(subject="Homeinfo: Neuen Standort freischalten",sender=sender,recipient=email,html=mailbody)
     Mailer.from_config(load_config("sysmon.conf")).send([mail])
 
 

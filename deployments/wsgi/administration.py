@@ -73,4 +73,4 @@ def confirm(id : str) -> JSONMessage:
     dep.delete_instance()
     return JSONMessage("Deployment confirmed.", id=deployment.id, status=201)
 
-ROUTES = [("POST", "/", add), ("DELETE", "/<int:ident>", delete), ("GET", "/<string:id>", confirm)]
+ROUTES = [("POST", "/", add), ("DELETE", "/<int:ident>", delete), ("GET", "/confirm/<string:id>", confirm)]
