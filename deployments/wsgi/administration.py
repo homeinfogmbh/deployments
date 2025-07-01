@@ -55,7 +55,8 @@ def delete(ident: int) -> JSONMessage:
     deployment.delete_instance()
     return JSONMessage("Order cancelled.", status=200)
 
-def confirm(id):
+
+def confirm(id : str) -> JSONMessage:
     """Confirms a deployment"""
     password = load_config("sysmon.conf").get("mailing", "encryptionpassword")
     id = password_decrypt(urllib.parse.unquote_plus(id),password)
@@ -71,4 +72,4 @@ def confirm(id):
     deployment.save()
     return JSONMessage("Deployment confirmed.", id=deployment.id, status=201)
 
-ROUTES = [("POST", "/", add), ("DELETE", "/<int:ident>", delete), ("GET", "/<str:id>", confirm)]
+ROUTES = [("POST", "/", add), ("DELETE", "/<int:ident>", delete), ("GET", "/<string:id>", confirm)]
