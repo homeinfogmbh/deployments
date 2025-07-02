@@ -30,7 +30,8 @@ __all__ = [
     "get_deployment",
     "get_deployments",
     "new_deployment_mail",
-    "password_decrypt"
+    "password_decrypt",
+    "password_encrypt"
 ]
 
 backend = default_backend()
