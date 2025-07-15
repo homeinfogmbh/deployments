@@ -9,7 +9,6 @@ import urllib.parse
 from configlib import load_config
 from his import ACCOUNT, authenticated, authorized,root
 from hwdb import Connection, Deployment, DeploymentType,DeploymentTemp
-from hwdb.orm.deployment import DeploymentTempDoesNotExist
 from mdb import Address
 from wsgilib import JSONMessage,JSON
 
@@ -63,7 +62,7 @@ def confirm(id : str) -> JSONMessage:
     id = password_decrypt(urllib.parse.unquote_plus(id),password).decode()
     try:
         dep = DeploymentTemp.select(cascade=True).where(DeploymentTemp.id == id).get()
-    except DeploymentTempDoesNotExist:
+    except :
         return JSONMessage("Deployment already confirmed.", status=201)
 
     deployment = Deployment(
