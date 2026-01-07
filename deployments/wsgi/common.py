@@ -48,10 +48,6 @@ def get(ident: int) -> JSON:
 def patch(ident: int) -> JSONMessage:
     """Modifies the respective deployment."""
 
-    customeraccount=Account().select().where(Account.customer==CUSTOMER.id).get()
-
-    can_be_modified(deployment := get_deployment(ident, customeraccount), ACCOUNT)
-
     if type_ := request.json.get("type"):
         try:
             deployment.type = DeploymentType(type_)
