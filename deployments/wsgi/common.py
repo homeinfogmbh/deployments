@@ -10,7 +10,7 @@ from his import CUSTOMER
 from his import authenticated
 from his import authorized
 from his import Account
-from hwdb import Connection, DeploymentType
+from hwdb import Connection, DeploymentType,Deployment
 from wsgilib import JSON, JSONMessage
 
 from deployments.functions import can_be_modified
@@ -47,7 +47,7 @@ def get(ident: int) -> JSON:
 @authorized("deployments")
 def patch(ident: int) -> JSONMessage:
     """Modifies the respective deployment."""
-
+    deployment=Deployment.select().where(Deployment.id==ident).get()
     if type_ := request.json.get("type"):
         try:
             deployment.type = DeploymentType(type_)
