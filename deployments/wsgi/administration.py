@@ -35,6 +35,7 @@ def add() -> JSONMessage:
         connection=Connection[request.json["connection"]],
         address=address,
         annotation=request.json.get("annotation"),
+        modem=request.json.get("modem"),
         timestamp=datetime.now(),
     )
     deployment.save()
@@ -69,6 +70,7 @@ def confirm(id : str) -> JSONMessage:
         customer=dep.customer,
         type=dep.type,
         connection=dep.connection,
+        modem=dep.modem,
         address=dep.address,
         annotation=dep.annotation,
         timestamp=datetime.now(),

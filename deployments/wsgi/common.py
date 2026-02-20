@@ -47,12 +47,18 @@ def get(ident: int) -> JSON:
 @authorized("deployments")
 def patch(ident: int) -> JSONMessage:
     """Modifies the respective deployment."""
-    deployment=Deployment.select().where(Deployment.id==ident).get()
+    deployment=Deployment.select().where(Deployment.id == ident).get()
     if type_ := request.json.get("type"):
         try:
             deployment.type = DeploymentType(type_)
         except ValueError:
             return JSONMessage("Invalid type.", status=400)
+
+    if modem := request.json.get("modem"):
+        try:
+            deployment.modem = modem
+        except ValueError:
+            return JSONMessage("error setting modem.", status=400)
 
     if connection := request.json.get("connection"):
         try:
