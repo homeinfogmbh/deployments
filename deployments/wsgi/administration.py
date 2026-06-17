@@ -3,16 +3,12 @@
 from datetime import datetime
 
 from flask import request
-import urllib.parse
-
-
-from configlib import load_config
-from his import ACCOUNT, authenticated, authorized,root
-from hwdb import Connection, Deployment, DeploymentType,DeploymentTemp
+from his import ACCOUNT, authenticated, authorized
+from hwdb import Connection, Deployment, DeploymentType
 from mdb import Address
-from wsgilib import JSONMessage,JSON
+from wsgilib import JSONMessage
 
-from deployments.functions import get_customer, get_deployment,new_deployment_mail,password_decrypt
+from deployments.functions import get_customer, get_deployment
 
 __all__ = ["ROUTES"]
 
@@ -29,7 +25,7 @@ def add() -> JSONMessage:
         request.json["address"]["city"],
     )
     address.save()
-    deployment = DeploymentTemp(
+    deployment = Deployment(
         customer=get_customer(request, ACCOUNT),
         type=DeploymentType.DDB,
         connection=Connection[request.json["connection"]],
@@ -39,9 +35,6 @@ def add() -> JSONMessage:
         timestamp=datetime.now(),
     )
     deployment.save()
-    new_deployment_mail("mb@mieterinfo.tv",deployment)
-    #new_deployment_mail("reallyme@gmx.net", deployment)
-    new_deployment_mail("s.dissmer@support.homeinfo.de", deployment)
     return JSONMessage("Deployment added.", id=deployment.id, status=201)
 
 
@@ -57,38 +50,4 @@ def delete(ident: int) -> JSONMessage:
     return JSONMessage("Order cancelled.", status=200)
 
 
-def confirm(id : str) -> JSONMessage:
-    """Confirms a deployment"""
-    password = load_config("sysmon.conf").get("mailing", "encryptionpassword")
-    id = password_decrypt(urllib.parse.unquote_plus(id),password).decode()
-    try:
-        dep = DeploymentTemp.select(cascade=True).where(DeploymentTemp.id == id).get()
-    except :
-        return JSONMessage("Deployment already confirmed.", status=201)
-
-    deployment = Deployment(
-        customer=dep.customer,
-        type=dep.type,
-        connection=dep.connection,
-        modem=dep.modem,
-        address=dep.address,
-        annotation=dep.annotation,
-        timestamp=datetime.now(),
-    )
-    deployment.save()
-    dep.delete_instance()
-    return JSONMessage("Deployment confirmed.", id=deployment.id, status=201)
-
-@authenticated
-@root
-def listtempdeployments()-> JSON:
-    """Lists deployments that need confirmations"""
-    return JSON(
-        [
-            deployment.to_json(address=True, customer=True)
-            for deployment in DeploymentTemp.select(cascade=True).where(True)
-        ]
-    )
-
-
-ROUTES = [("POST", "/", add), ("DELETE", "/<int:ident>", delete), ("GET", "/confirm/<string:id>", confirm), ("GET", "/listtemp/", listtempdeployments)]
+ROUTES = [("POST", "/", add), ("DELETE", "/<int:ident>", delete)]
